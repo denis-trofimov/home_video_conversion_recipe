@@ -1,5 +1,5 @@
 #!/bin/bash
-#Usage `basename $0` source#1 source#n target
+#Usage `basename $0` source_dir target
 #
 #ffmpeg -i "concat:source#1|..|source#n" -c copy -sn "/home/denis/Видео/События 2016"/1.mts"
 #
