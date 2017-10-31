@@ -58,10 +58,10 @@ do
     fi
     #use named pipes to avoid creating intermediate files#
     mkfifo temp${i}
-    (avconv -y -i ${arg[$i]} -c copy -bsf:v h264_mp4toannexb -f mpegts temp${i} 2> /dev/null &)
+    (ffmpeg -y -i ${arg[$i]} -c copy -bsf:v h264_mp4toannexb -f mpegts temp${i} 2> /dev/null &)
 done
 concat="${concat}"
-avconv -v verbose -y -f mpegts -i ${concat} -c copy -bsf:a aac_adtstoasc -movflags faststart ${arg[$#-1]}
+ffmpeg -v verbose -y -f mpegts -i ${concat} -c copy -bsf:a aac_adtstoasc -movflags faststart ${arg[$#-1]}
 
 #Delete pipes
 for ((i=0; i<$#-1; i++))

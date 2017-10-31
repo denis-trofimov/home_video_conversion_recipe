@@ -1,7 +1,7 @@
 #!/bin/bash
 #Usage `basename $0` source#1 source#n target
 #
-#avconv -i "concat:source#1|..|source#n" -c copy -sn "/home/denis/Видео/События 2016"/1.mts"
+#ffmpeg -i "concat:source#1|..|source#n" -c copy -sn "/home/denis/Видео/События 2016"/1.mts"
 #
 #for file in /var/*
 #do
@@ -29,8 +29,8 @@ do
     i+=1
 done
 concat="${concat}"
-echo avconv -y -i \"${concat}\" -c copy -sn ${arg[1]}
-avconv -i ${concat} -c copy -sn -y ${arg[1]}
+echo ffmpeg -y -i \"${concat}\" -c copy -sn ${arg[1]}
+ffmpeg -i ${concat} -c copy -sn -y ${arg[1]}
 
 #end of main branch
 fi
