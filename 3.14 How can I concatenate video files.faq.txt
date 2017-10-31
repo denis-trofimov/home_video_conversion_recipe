@@ -116,9 +116,10 @@ Seeking while doing a codec copy
 
 Using -ss as input option together with -c:v copy might not be accurate since ffmpeg is forced to only use/split on i-frames. Though it will—if possible—adjust the start time of the stream to a negative value to compensate for that. Basically, if you specify "second 157" and there is no key frame until second 159, it will include two seconds of audio (with no video) at the start, then will start from the first key frame. So be careful when splitting and doing codec copy.
 
+
 | avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 2000k -maxrate 2200k -mbd 2 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -filter:v "yadif" -r:v 25 -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" ~/films/
 получилось:
-frame=179172 fps= 21 q=10.0 Lsize= 1354025kB time=01:59:26.88 bitrate=1547.7kbits/s    
+frame=179172 fps= 21 q=10.0 Lsize= 1354025kB time=01:59:26.88 bitrate=1547.7kbits/s
 video:1312675kB audio:27996kB subtitle:0 global headers:0kB muxing overhead 0.996041%
 
 cat M2U01053.MPG | avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 1800k -maxrate 1800k -mbd 2 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -filter:v "yadif" -r:v 25 -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" sample.avi
@@ -137,7 +138,31 @@ cat M2U01053.MPG | avconv -threads 0 -y -i - -f avi -b:v 1800k -maxrate 1800k -m
 
 cat 00001.MTS 00002.MTS 00003.MTS | avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 2000k -maxrate 2200k -mbd 2 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -filter:v "yadif" -acodec libmp3lame -b:a 64k -ac 1 -af "volume=10dB" ~/films/2016-02-28_54.avi
 
-
 After using dpkg, running the following command helped me to install the dependencies :
 
 sudo apt-get -f install
+
+^Cframe=62581 fps=7.7 q=10.0 Lsize=  635255kB time=00:41:43.24 bitrate=2078.9kbits/s
+video:611761kB audio:19553kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.624222%
+
+-deblock 1:0:0 -aq-mode 1 -aq-strength 1,00 -analyse=0x3:0x133 -psy-rd 1,00:0,00 -x264-params cabac=1:ref=3:me=hex:subme=7:psy=1:mixed_ref=1:me_range=16:chroma_me=1:trellis=1:8x8dct=1:cqm=0:deadzone=21,11:fast_pskip=1:chroma_qp_offset=-2:threads=3:lookahead_threads=1:sliced_threads=0:nr=0:decimate=1:interlaced=0:bluray-compat=0:constrained_intra=0:bframes=3:b_pyramid=2:b_adapt=1:b_bias=0:direct=1:weightb=1:open_gop=0:weightp=2:keyint=250:keyint_min=25:scenecut=40:intra_refresh=0:rc_lookahead=40:rc=2pass:mbtree=1:bitrate=2000:ratetol=1,0:qcomp=0,60:qpmin=10:qpmax=51:qpstep=4:cplxblur=20,0:qblur=0,5:ip_ratio=1,40
+
+ffmpeg -threads 0 -y -i MVI_4172.MOV -ss 0:0:0 -t 0:01:00 -vcodec libx264 -f mp4 -mbd 2 -bf 2 -b:v 2000k -maxrate 2000k -filter:v "yadif" -deblock 1:0:0 -aq-mode 1 -aq-strength 1.00 -psy-rd 1.00:0.00 -mixed-refs 1 -direct-pred 1 -qblur 0.5 -b-pyramid 2 -coder ac -cmp chroma -partitions all -movflags faststart -x264-params cabac=1:ref=3:me=hex:subme=7:psy=1:me_range=16:trellis=1:8x8dct=1:cqm=0:\fast-pskip=1:chroma_qp_offset=-2:threads=3:lookahead_threads=1:\sliced_threads=0:nr=0:interlaced=0:bluray-compat=0:\constrained_intra=0:bframes=3:b_adapt=1:b-bias=0:weightb=1:open_gop=0:\weightp=2:keyint=250:keyint_min=25:scenecut=40:intra_refresh=0:rc_lookahead=40:\mbtree=1:ratetol=1.0:qcomp=0.60:qpmin=10:qpmax=51:\qpstep=4:cplxblur=20.0:vbv-init=0.90 -b:v 2000k -maxrate 2000k -acodec libaacplus -b:a 64k -ac 1 -af "volume=10dB" 1.mp4
+
+mkfifo temp1 temp2 temp3 temp4
+ffmpeg -y -i MVI_4176.m4v -c copy -bsf:v h264_mp4toannexb -f mpegts temp1 2> /dev/null & \
+ffmpeg -y -i MVI_4177.m4v -c copy -bsf:v h264_mp4toannexb -f mpegts temp2 2> /dev/null & \
+ffmpeg -y -i MVI_4178.m4v -c copy -bsf:v h264_mp4toannexb -f mpegts temp3 2> /dev/null & \
+ffmpeg -y -i MVI_4179.m4v -c copy -bsf:v h264_mp4toannexb -f mpegts temp4 2> /dev/null & \
+ffmpeg -y -f mpegts -i "concat:temp1|temp2|temp3|temp4" -c copy -bsf:a aac_adtstoasc -movflags faststart 05.m4v
+
+Problem to play in Quicktime
+avconv -i "concat:00039.MTS|00101.MTS|00102.MTS" -c copy  -movflags faststart 12.m4v
+avconv -fflags +genpts -i 00102.MTS -c:v copy -c:a copy  -movflags faststart 00102.m4v
+[ipod @ 0x94f9e60] pts has no value
+    Last message repeated 1573 times
+
+Good
+avconv -i "concat:00039.MTS|00101.MTS|00102.MTS" -c copy -movflags faststart 12.mts
+
+avconv -i "concat:00085.MTS:00120.MTS" -c copy -sn /home/denis/Видео/2016-2017\ учебный\ год/30.mts
