@@ -1,0 +1,143 @@
+3.14 How can I concatenate video files?
+There are several solutions, depending on the exact circumstances.
+
+3.14.1 Concatenating using the concat filter
+
+FFmpeg has a concat filter designed specifically for that, with examples in the documentation. This operation is recommended if you need to re-encode.
+
+3.14.2 Concatenating using the concat demuxer
+
+FFmpeg has a concat demuxer which you can use when you want to avoid a re-encode and your format doesn’t support file level concatenation.
+
+3.14.3 Concatenating using the concat protocol (file level)
+
+FFmpeg has a concat protocol designed specifically for that, with examples in the documentation.
+
+A few multimedia containers (MPEG-1, MPEG-2 PS, DV) allow one to concatenate video by merely concatenating the files containing them.
+
+Hence you may concatenate your multimedia files by first transcoding them to these privileged formats, then using the humble cat command (or the equally humble copy under Windows), and finally transcoding back to your format of choice.
+
+ffmpeg -i input1.avi -qscale:v 1 intermediate1.mpg
+ffmpeg -i input2.avi -qscale:v 1 intermediate2.mpg
+cat intermediate1.mpg intermediate2.mpg > intermediate_all.mpg
+ffmpeg -i intermediate_all.mpg -qscale:v 2 output.avi
+Additionally, you can use the concat protocol instead of cat or copy which will avoid creation of a potentially huge intermediate file.
+
+ffmpeg -i input1.avi -qscale:v 1 intermediate1.mpg
+ffmpeg -i input2.avi -qscale:v 1 intermediate2.mpg
+ffmpeg -i concat:"intermediate1.mpg|intermediate2.mpg" -c copy intermediate_all.mpg
+ffmpeg -i intermediate_all.mpg -qscale:v 2 output.avi
+Note that you may need to escape the character "|" which is special for many shells.
+
+Another option is usage of named pipes, should your platform support it:
+
+mkfifo intermediate1.mpg
+mkfifo intermediate2.mpg
+ffmpeg -i input1.avi -qscale:v 1 -y intermediate1.mpg < /dev/null &
+ffmpeg -i input2.avi -qscale:v 1 -y intermediate2.mpg < /dev/null &
+cat intermediate1.mpg intermediate2.mpg |\
+ffmpeg -f mpeg -i - -c:v mpeg4 -acodec libmp3lame output.avi
+
+Пример наши тренировки:
+cat M2U01041.MPG M2U01042.MPG M2U01043.MPG M2U01044.MPG|\
+avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 1500k -maxrate 1800k -mbd 2 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -filter:v "yadif=deint=1" -r:v 25 -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" ~/films2/2015-11-22.avi
+
+
+
+
+In clipping a video, we need to specify starting position and duration. For both ffmpeg and avconv this is done with the command-line arguments:
+
+-ss
+Seek position: When used as an output option, decodes but discards input until the timestamp reaches the specified time. The seek position can be specified as the number of seconds from the start of the video or in the form HH:MM:SS[.xxx], where HH represents hours, MM represents minutes, SS represents seconds, and .xxx is an optional fraction of a second.
+-t
+Duration: This tells the command to stop writing output after the specified duration. Duration can be given in seconds or in the form HH:MM:SS[.xxx].
+
+avconv -i recital.mkv -ss 00:22:00 -t 00:05:20 -c: copy myniece.mkv
+
+Introduction
+If you need to extract only a specific part of your input, you'll need to use the seeking option to get to that specific part in the input first. ​The parameter -ss is used to seek within the input and it can be used in several ways.
+
+Input seeking ¶
+The -ss parameter needs to be specified somewhere before -i:
+
+ffmpeg -ss 00:23:00 -i Mononoke.Hime.mkv -frames:v 1 out1.jpg
+Example output for "Seeking with FFmpeg".
+
+This example will produce one image frame (out1.jpg) at the twenty-third minute from the beginning of the movie. The input will be parsed using keyframes, which is very fast. As of FFmpeg 2.1, when transcoding with ffmpeg (i.e. not just stream copying), -ss is now also "frame-accurate" even when used as an input option. Previous behavior (seeking only to the nearest preceding keyframe, even if not precisely accurate) can be restored with the -noaccurate_seek option.
+
+Output seeking
+The -ss parameter needs to be specified after -i:
+
+ffmpeg -i Mononoke.Hime.mkv -ss 00:23:00 -frames:v 1 out2.jpg
+Example output for "Seeking with FFmpeg".
+
+This example will also produce one image frame (out2.jpg) precisely at the twenty-third minute from the beginning of the movie.
+
+Here, the input will be decoded (and discarded) until it reaches the position given by -ss. This will be done very slowly, frame by frame. As of FFmpeg 2.1, the main advantage is that when applying filters to the output stream, the timestamps aren't reset prior to filtering (i.e. when ​burning subtitles into a video, you don't need to modify the subtitle timestamps), but the drawback is that it will take a lot of time until it finally reaches that time point. The bigger the seeking time is, the longer you will have to wait.
+
+Combined seeking
+For this we specify the -ss parameter before and after -i:
+
+ffmpeg -ss 00:22:30 -i Mononoke.Hime.mkv -ss 00:00:30 -frames:v 1 out3.jpg
+Example output for "Seeking with FFmpeg".
+
+As of FFmpeg 2.1, combined seeking is still possible but I have yet to find a valid use case for it since -ss as an input option is now both fast and accurate.
+
+This approach uses keyframes to seek until 00:02:30, and then seeks frame-by-frame until it reaches 00:03:00 (00:02:30 + 00:00:30)
+
+Note that all images created by the previous commands should be identical.
+
+There is no general rule on how to correctly set both time points for -ss options, because those depend on the keyframe interval used when the input was encoded. To give some orientation, the x264 encoder by default uses a GOP size of 250 (which means 1 keyframe each 10 seconds if the input frame rate is 25 fps).
+
+Notes
+Cutting small sections
+
+To extract only a small segment in the middle of a movie, it can be used in combination with -t which specifies the duration, like -ss 60 -t 10 to capture from second 60 to 70. Or you can use the -to option to specify an out point, like -ss 60 -to 70 to capture from second 60 to 70. -t and -to are mutually exclusive. If you use both, -t will be used.
+
+Note that if you specify -ss before -i only, the timestamps will be reset to zero, so -t and -to have not the same effect. If you want to keep the original timestamps, add the -copytsoption.
+
+The first command will cut from 00:01:00 to 00:03:00 (in the original), using the faster seek.
+The second command will cut from 00:01:00 to 00:02:00, as intended, using the slower seek.
+The third command will cut from 00:01:00 to 00:02:00, as intended, using the faster seek.
+
+ffmpeg -ss 00:01:00 -i video.mp4 -to 00:02:00 -c copy cut.mp4
+ffmpeg -i video.mp4 -ss 00:01:00 -to 00:02:00 -c copy cut.mp4
+ffmpeg -ss 00:01:00 -i video.mp4 -to 00:02:00 -c copy -copyts cut.mp4
+If you cut with stream copy (-c copy) you need to use the -avoid_negative_ts 1 option if you want to use that segment with the ​concat demuxer .
+
+Example:
+
+ffmpeg -ss 00:03:00 -i video.mp4 -t 60 -c copy -avoid_negative_ts 1 cut.mp4
+Time unit syntax
+
+Note that you can use two different time unit formats: sexagesimal (HOURS:MM:SS.MICROSECONDS, as in 01:23:45.678), or in seconds. If a fraction is used, such as 02:30.05, this is interpreted as "5 100ths of a second", not as frame 5. For instance, 02:30.5 would be 2 minutes, 30 seconds, and a half a second, which would be the same as using 150.5 in seconds.
+
+Seeking while doing a codec copy
+
+Using -ss as input option together with -c:v copy might not be accurate since ffmpeg is forced to only use/split on i-frames. Though it will—if possible—adjust the start time of the stream to a negative value to compensate for that. Basically, if you specify "second 157" and there is no key frame until second 159, it will include two seconds of audio (with no video) at the start, then will start from the first key frame. So be careful when splitting and doing codec copy.
+
+| avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 2000k -maxrate 2200k -mbd 2 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -filter:v "yadif" -r:v 25 -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" ~/films/
+получилось:
+frame=179172 fps= 21 q=10.0 Lsize= 1354025kB time=01:59:26.88 bitrate=1547.7kbits/s    
+video:1312675kB audio:27996kB subtitle:0 global headers:0kB muxing overhead 0.996041%
+
+cat M2U01053.MPG | avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 1800k -maxrate 1800k -mbd 2 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -filter:v "yadif" -r:v 25 -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" sample.avi
+
+cat M2U01053.MPG | avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 1800k -maxrate 1800k -mbd 2 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -r:v 25 -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" sample_nodeinterlace.avi
+
+cat M2U01053.MPG | avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 1800k -maxrate 1800k -bf 2 -trellis 2 -cmp 2 -subcmp 2  -filter:v "yadif" -r:v 25 -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" sample_nombd2mv4aic.avi
+
+cat M2U01053.MPG | avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 1800k -maxrate 1800k -filter:v "yadif" -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" sample_onlyyadif.avi
+
+
+cat M2U01053.MPG | avconv -threads 0 -y -i - -f avi -b:v 1800k -maxrate 1800k -mbd 2 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -filter:v "yadif" -r:v 25 -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" samplehighfmp4.avi
+
+
+cat M2U01053.MPG | avconv -threads 0 -y -i - -f avi -b:v 1800k -maxrate 1800k -mbd 3 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -filter:v "yadif" -r:v 25 -acodec libmp3lame -b:a 32k -ac 1 -af "volume=10dB" sample3highfmp4.avi
+
+cat 00001.MTS 00002.MTS 00003.MTS | avconv -threads 0 -y -i - -f avi -vcodec libxvid -vtag XVID -b:v 2000k -maxrate 2200k -mbd 2 -bf 2 -flags +mv4+aic -trellis 2 -cmp 2 -subcmp 2 -filter:v "yadif" -acodec libmp3lame -b:a 64k -ac 1 -af "volume=10dB" ~/films/2016-02-28_54.avi
+
+
+After using dpkg, running the following command helped me to install the dependencies :
+
+sudo apt-get -f install

@@ -1,0 +1,2 @@
+file '/media/denis/GSP1RMCULXF/00000.avi'
+file '/home/denis/films/00001.avi'
