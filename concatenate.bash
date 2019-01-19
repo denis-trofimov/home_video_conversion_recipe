@@ -1,6 +1,6 @@
-#!/bin/bash
-#Usage `basename $0` source#1 {source#2 ..  source#n} last_source target
-#
+#!/usr/bin/env bash #lends you some flexibility on different systems
+# Usage `basename $0` source#1 {source#2 ..  source#n} last_source target
+
 #=== Concat protocol ===#protocol
 
 #While the demuxer works at the stream level, the concat protocol works at the
