@@ -20,10 +20,10 @@ do
     fi
     # use named pipes to avoid creating intermediate files
     mkfifo temp${i}
-    (ffmpeg -y -i ${arg[$i]} -vcodec copy -acodec aac -b:a 128k -af "volume=12dB" -bsf:v h264_mp4toannexb -f mpegts temp${i} 2> /dev/null &)
+    (ffmpeg -y -i ${arg[$i]} -codec copy -bsf:v h264_mp4toannexb -f mpegts temp${i} 2> /dev/null &)
 done
 concat="${concat}"
-ffmpeg -v verbose -y -f mpegts -i ${concat} -c copy -bsf:a aac_adtstoasc -movflags faststart ${arg[$#-1]}
+ffmpeg -v verbose -y -f mpegts -i ${concat} -vcodec copy -acodec aac -b:a 128k -af "volume=12dB" -bsf:a aac_adtstoasc ${arg[$#-1]}
 
 # Delete pipes
 for ((i=0; i<$#-1; i++))
