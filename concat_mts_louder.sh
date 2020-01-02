@@ -24,6 +24,5 @@ do
     fi
     i+=1
 done
-echo ffmpeg -i ${concat} -c copy -sn -y $2
-ffmpeg -i ${concat} -c copy -sn -y $2
+ffmpeg -i ${concat} -vcodec copy -acodec aac -b:a 128k -af "volume=12dB" -bsf:a aac_adtstoasc -sn -y $2
 exit 0
