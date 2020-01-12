@@ -6,7 +6,7 @@ get_abs_filename() {
   fi
 }
 
-if [[ ($# < 2) || ($1 == '-h') || ($1 == '--help')
+if [[ ($# < 2) || ($1 == '-h') || ($1 == '--help') ]]
 then
     echo "Usage: `basename $0` source_dir target"
     exit 22  # EINVAL   /* Invalid argument */
