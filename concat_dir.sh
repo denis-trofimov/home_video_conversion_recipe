@@ -9,11 +9,11 @@ get_abs_filename() {
 if [[ ($# < 2) || ($1 == '-h') || ($1 == '--help') ]]
 then
     echo "Usage: `basename $0` source_dir target"
-    exit 22  # EINVAL   /* Invalid argument */
+    exit 1
 fi
 concat=""
 i=0
-for file in $1/*.MTS
+for file in $1/*.*
 do
     echo $(get_abs_filename $file)
     if [ $i == 0 ]
