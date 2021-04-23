@@ -1,4 +1,5 @@
-#!/usr/bin/env bash #lends you some flexibility on different systems
+#!/usr/bin/env bash
+#lends you some flexibility on different systems
 # Usage `basename $0` source#1 {source#2 ..  source#n} last_source target
 
 if [[ ($# < 3) || ($1 == '-h') || ($1 == '--help') || ($1 == '/help') ]]

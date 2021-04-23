@@ -1,20 +1,18 @@
-#!/usr/bin/env bash #lends you some flexibility on different systems
-# Usage `basename $0` source#1 {source#2 ..  source#n} last_source target
-
+#!/usr/bin/env bash
 if [[ ($# < 3) || ($1 == '-h') || ($1 == '--help') || ($1 == '/help') ]]
 then
     echo "Usage `basename $0` source#1 {source#2 ..  source#n} last_source target"
-else
-# main branch
-arg=($*)
-# There are ${arg[0]} .. ${arg[$#-2]} sources and one target ${arg[$#-1]}
-concat=concat:
+    exit 22  # EINVAL   /* Invalid argument */
+fi
+
+arg=($*) # There are ${arg[0]} .. ${arg[$#-2]} sources and one target ${arg[$#-1]}
+
 for ((i=0; i<$#-1; i++))
 do
     echo ${arg[${i}]}
     if [ ${i} == 0 ]
     then
-        concat="${concat}temp${i}"
+        concat="concat:temp${i}"
     else
         concat="${concat}|temp${i}"
     fi
@@ -30,5 +28,3 @@ for ((i=0; i<$#-1; i++))
 do
     rm temp${i}
 done
-# end of main branch
-fi

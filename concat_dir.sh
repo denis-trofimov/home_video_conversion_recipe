@@ -12,7 +12,6 @@ then
     exit 1
 fi
 concat=""
-i=0
 for file in $1/*.*
 do
     echo $(get_abs_filename $file)
@@ -22,7 +21,6 @@ do
     else
         concat="${concat}|$(get_abs_filename $file)"
     fi
-    i+=1
 done
 echo ffmpeg -i ${concat} -c copy -sn -y $2
 ffmpeg -i ${concat} -c copy -sn -y $2

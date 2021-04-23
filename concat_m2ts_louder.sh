@@ -13,7 +13,7 @@ if [[ ($# < 2) || ($1 == '-h') || ($1 == '--help') ]] ; then
 fi
 concat=""
 i=0
-for file in $1/*.MTS ; do
+for file in $1/*.m2ts ; do
     echo $(get_abs_filename $file)
     if [ $i == 0 ] ; then
         concat="concat:$(get_abs_filename $file)"
