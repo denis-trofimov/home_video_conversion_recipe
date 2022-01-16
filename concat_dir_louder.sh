@@ -9,20 +9,26 @@ get_abs_filename() {
 
 if [[ ($# -lt 2) || ($1 == '-h') || ($1 == '--help') ]] ; then
     echo "Concatenate all *.MTS or *.extension videos found in the dir given. Adjust the volume up 12dB."
-    echo "Usage: $(basename $0) path [--type extension] target"
+    echo "Usage: $(basename $0) path target [--type extension] [--rotate]"
     exit 22  # EINVAL   /* Invalid argument */
 fi
 
 path=$1
 target=$2
 type="MTS"
-if [[ ($# == 4) && ($2 == "--type") ]]
+rotate=""
+
+if [[ ($# == 4) && ($3 == "--type") ]]
 then
-    type=$3
-    target=$4
+    type=$4
 fi
 
-concat=concat:
+if [[ ($# == 5) && ($5 == "--rotate") || ($# == 3) && ($3 == "--rotate") ]]
+then
+    rotate='-metadata:s:v rotate="-90"'
+fi
+
+concat="concat:"
 i=0
 for file in $path/*.$type
 do
@@ -42,7 +48,7 @@ do
 done
 
 echo ${concat}
-ffmpeg -v verbose -y -f mpegts -i ${concat} -vcodec copy -acodec aac -b:a 128k -af "volume=12dB" -bsf:a aac_adtstoasc -sn -y "$target"
+ffmpeg -v verbose -y -f mpegts -i ${concat} ${rotate} -vcodec copy -acodec aac -b:a 128k -af "volume=12dB" -bsf:a aac_adtstoasc -sn -y ${target}
 
 # Delete pipes
 for ((i=0; i<$#-1; i++))

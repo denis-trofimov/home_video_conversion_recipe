@@ -1,0 +1,6 @@
+file "/media/denis/disk/DCIM/101KZ990/101_0001.MP4"
+file '/media/denis/disk/DCIM/101KZ990/101_0002.MP4'
+file '/media/denis/disk/DCIM/101KZ990/101_0003.MP4'
+file '/media/denis/disk/DCIM/101KZ990/101_0004.MP4'
+file '/media/denis/disk/DCIM/101KZ990/101_0005.MP4'
+file '/media/denis/disk/DCIM/101KZ990/101_0006.MP4'
