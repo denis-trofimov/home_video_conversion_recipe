@@ -40,14 +40,15 @@
 if [[ ($# < 3) || ($1 == '-h') || ($1 == '--help') || ($1 == '/help') ]]
 then
     echo "Usage `basename $0` source#1 {source#2 ..  source#n} last_source target"
-else
-#main branch
+    exit 22  # EINVAL   /* Invalid argument */
+fi
+
 arg=($*)
 # There are ${arg[0]} .. ${arg[$#-2]} sources and one target ${arg[$#-1]}
-concat=concat:
+concat="concat:"
 for ((i=0; i<$#-1; i++))
 do
-    echo ${arg[${i}]}
+    echo "${arg[${i}]}"
     if [ ${i} == 0 ]
     then
         concat="${concat}temp${i}"
@@ -56,15 +57,13 @@ do
     fi
     #use named pipes to avoid creating intermediate files#
     mkfifo temp${i}
-    (ffmpeg -y -i ${arg[$i]} -c copy -bsf:v h264_mp4toannexb -f mpegts temp${i} 2> /dev/null &)
+    (ffmpeg -y -i "${arg[$i]}" -c copy -bsf:v h264_mp4toannexb -f mpegts temp${i} 2> /dev/null &)
 done
-concat="${concat}"
-ffmpeg -v verbose -y -f mpegts -i ${concat} -c copy -bsf:a aac_adtstoasc -movflags faststart ${arg[$#-1]}
+
+ffmpeg -v verbose -y -f mpegts -i "${concat}" -c copy -bsf:a aac_adtstoasc -movflags faststart ${arg[$#-1]}
 
 #Delete pipes
 for ((i=0; i<$#-1; i++))
 do
     rm temp${i}
 done
-#end of main branch
-fi

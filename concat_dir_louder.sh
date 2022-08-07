@@ -13,8 +13,8 @@ if [[ ($# -lt 2) || ($1 == '-h') || ($1 == '--help') ]] ; then
     exit 22  # EINVAL   /* Invalid argument */
 fi
 
-path=$1
-target=$2
+path="$1"
+target="$2"
 type="MTS"
 rotate=""
 
@@ -30,7 +30,7 @@ fi
 
 concat="concat:"
 i=0
-for file in $path/*.$type
+for file in "$path"/*.$type
 do
     echo "$(get_abs_filename $file)"
     if [ ${i} == 0 ]
@@ -47,8 +47,8 @@ do
     ((i++))
 done
 
-echo ${concat}
-ffmpeg -v verbose -y -f mpegts -i ${concat} ${rotate} -vcodec copy -acodec aac -b:a 128k -af "volume=12dB" -bsf:a aac_adtstoasc -sn -y ${target}
+echo "ffmpeg -v verbose -y -f mpegts -i ${concat} ${rotate} -vcodec copy -acodec aac -b:a 128k -af \"volume=12dB\" -bsf:a aac_adtstoasc -sn -y -movflags faststart -f mp4 ${target}"
+ffmpeg -v verbose -y -f mpegts -i "${concat}" "${rotate}" -vcodec copy -acodec aac -b:a 128k -af "volume=12dB" -bsf:a aac_adtstoasc -sn -y -movflags faststart -f mp4 ${target}
 
 # Delete pipes
 for ((i=0; i<$#-1; i++))
